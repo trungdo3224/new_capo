@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "capo"
+version = "0.1.0"
+description = "C.A.P.O - Context-Aware Pentest Orchestrator for OSCP/CPTS"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+    "typer[all]>=0.9.0",
+    "rich>=13.0.0",
+    "prompt-toolkit>=3.0.0",
+    "pyyaml>=6.0",
+    "inquirerpy>=0.3.4",
+    "pyperclip>=1.8.0",
+    "thefuzz[speedup]>=0.20.0",
+    "filelock>=3.0",
+    "jmespath>=1.0.0",
+    "pydantic>=2.0.0",
+    "ruamel.yaml>=0.17.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+capo = "capo.main:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["capo*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-v", "--tb=short"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "S", "B"]
+ignore = ["S603", "S607", "S101"]

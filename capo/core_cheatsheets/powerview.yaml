@@ -1,0 +1,60 @@
+category: "powerview"
+description: "PowerView / SharpView enumeration commands"
+commands:
+  - name: "pv-get-domain"
+    description: "Get basic domain information"
+    command: "Get-NetDomain | Select-Object Name, Forest, DomainControllers, DomainMode"
+    tool: "powerview"
+    tags: ["ad", "powerview", "enum", "domain"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "pv-get-policy"
+    description: "Get domain password policy"
+    command: "Get-DomainPolicyData | Select-Object -ExpandProperty SystemAccess"
+    tool: "powerview"
+    tags: ["ad", "powerview", "enum", "policy"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "pv-find-admins"
+    description: "Find machines where current user is local admin"
+    command: "Find-LocalAdminAccess -Verbose"
+    tool: "powerview"
+    tags: ["ad", "powerview", "enum", "admin"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Requires RPC/SMB access to targets"
+
+  - name: "pv-get-computers"
+    description: "List all domain computers"
+    command: "Get-NetComputer -Properties name,operatingsystem,dnshostname"
+    tool: "powerview"
+    tags: ["ad", "powerview", "enum", "computers"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "pv-session-hunter"
+    description: "Find where high-value users are logged in"
+    command: "Invoke-UserHunter -CheckAccess"
+    tool: "powerview"
+    tags: ["ad", "powerview", "enum", "sessions"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Very noisy! Checks for Domain Admins logged in elsewhere"
+
+  - name: "pv-acl-scanner"
+    description: "Find interesting ACLs for current user"
+    command: "Get-DomainObjectAcl -Identity \"TargetUser or Group\" -ResolveGUIDs"
+    tool: "powerview"
+    tags: ["ad", "powerview", "enum", "acl"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "pv-kerberoast"
+    description: "Get SPN enabled accounts (Kerberoasting)"
+    command: "Get-NetUser -SPN | Select-Object samaccountname,serviceprincipalname"
+    tool: "powerview"
+    tags: ["ad", "powerview", "enum", "kerberoast"]
+    os: "windows"
+    exam: ["oscp", "cpts"]

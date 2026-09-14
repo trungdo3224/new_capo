@@ -1,0 +1,93 @@
+category: "smb"
+description: "SMB/CIFS enumeration and attacks"
+commands:
+  - name: "nxc-smb-null"
+    description: "SMB null session check"
+    command: "nxc smb {IP} -u '' -p '' --shares"
+    tool: "netexec"
+    tags: ["smb", "null", "shares", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "nxc-smb-guest"
+    description: "SMB guest session check"
+    command: "nxc smb {IP} -u 'Guest' -p '' --shares"
+    tool: "netexec"
+    tags: ["smb", "guest", "shares"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "nxc-rid-brute"
+    description: "RID brute force user enumeration via SMB"
+    command: "nxc smb {IP} -u '' -p '' --rid-brute 5000"
+    tool: "netexec"
+    tags: ["smb", "rid", "users", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Works even with null session on many DCs"
+
+  - name: "nxc-pass-pol"
+    description: "Get password policy via SMB"
+    command: "nxc smb {IP} -u '' -p '' --pass-pol"
+    tool: "netexec"
+    tags: ["smb", "password", "policy"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Check lockout threshold before spraying!"
+
+  - name: "nxc-users-enum"
+    description: "Enumerate domain users"
+    command: "nxc smb {IP} -u {USER} -p {PASSWORD} --users"
+    tool: "netexec"
+    tags: ["smb", "users", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "smbclient-list"
+    description: "List SMB shares with smbclient"
+    command: "smbclient -N -L //{IP}"
+    tool: "smbclient"
+    tags: ["smb", "shares", "list"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "smbclient-connect"
+    description: "Connect to SMB share"
+    command: "smbclient //{IP}/{SHARE} -U {USER}%{PASSWORD}"
+    tool: "smbclient"
+    tags: ["smb", "connect"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "smbmap-enum"
+    description: "Enumerate shares and permissions"
+    command: "smbmap -H {IP} -u '' -p ''"
+    tool: "smbmap"
+    tags: ["smb", "shares", "permissions"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "enum4linux-full"
+    description: "Full SMB/NetBIOS enumeration"
+    command: "enum4linux-ng -A {IP}"
+    tool: "enum4linux-ng"
+    tags: ["smb", "enum", "netbios", "full"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "rpcclient-null"
+    description: "RPC null session enumeration"
+    command: "rpcclient -U '' -N {IP} -c 'enumdomusers; enumdomgroups; querydominfo'"
+    tool: "rpcclient"
+    tags: ["rpc", "null", "users", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "nxc-password-spray"
+    description: "Password spray via SMB"
+    command: "nxc smb {IP} -u {USERS_FILE} -p '{PASSWORD}' --no-bruteforce"
+    tool: "netexec"
+    tags: ["smb", "spray", "password"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "[Warning] Check lockout policy first! Use --no-bruteforce for 1:1"

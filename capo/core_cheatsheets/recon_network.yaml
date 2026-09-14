@@ -1,0 +1,52 @@
+category: "recon-network"
+description: "Network reconnaissance and port scanning"
+commands:
+  - name: "nmap-quick-all-ports"
+    description: "Quick TCP scan of all 65535 ports"
+    command: "nmap -p- --open --min-rate 5000 -T4 {IP} -oN scans/nmap_quick.nmap"
+    tool: "nmap"
+    tags: ["nmap", "recon", "ports", "tcp"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Always start with this to get full port picture"
+
+  - name: "nmap-detailed-scan"
+    description: "Detailed version and script scan on specific ports"
+    command: "nmap -sC -sV -p {PORTS} {IP} -oN scans/nmap_detailed.nmap"
+    tool: "nmap"
+    tags: ["nmap", "recon", "version", "scripts"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "nmap-udp-top"
+    description: "UDP scan on top 50 ports"
+    command: "sudo nmap -sU --top-ports 50 --open {IP} -oN scans/nmap_udp.nmap"
+    tool: "nmap"
+    tags: ["nmap", "recon", "udp"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "UDP scans are slow but can reveal SNMP(161), TFTP(69), DNS(53)"
+
+  - name: "nmap-vuln-scripts"
+    description: "Run vulnerability NSE scripts"
+    command: "nmap --script vuln -p {PORTS} {IP} -oN scans/nmap_vuln.nmap"
+    tool: "nmap"
+    tags: ["nmap", "vuln", "scripts"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "nmap-smb-scripts"
+    description: "Run all SMB-related NSE scripts"
+    command: "nmap --script 'smb-enum-*,smb-vuln-*,smb-os-discovery' -p 139,445 {IP}"
+    tool: "nmap"
+    tags: ["nmap", "smb", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "nmap-stealth-scan"
+    description: "Stealth SYN scan with slower rate"
+    command: "nmap -sS -p- --min-rate 300 -T2 {IP} -oN scans/nmap_stealth.nmap"
+    tool: "nmap"
+    tags: ["nmap", "stealth", "recon"]
+    os: "any"
+    exam: ["oscp", "cpts"]

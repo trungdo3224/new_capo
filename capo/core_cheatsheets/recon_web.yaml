@@ -1,0 +1,99 @@
+category: "recon-web"
+description: "Web application enumeration and fuzzing"
+commands:
+  - name: "ffuf-dir-small"
+    description: "Directory fuzzing with raft-small wordlist"
+    command: "ffuf -u http://{IP}/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -ac -mc 200,204,301,302,307,401,403"
+    tool: "ffuf"
+    tags: ["ffuf", "web", "fuzz", "directory"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "ffuf-dir-medium"
+    description: "Directory fuzzing with medium wordlist"
+    command: "ffuf -u http://{IP}/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -ac -mc 200,204,301,302,307,401,403"
+    tool: "ffuf"
+    tags: ["ffuf", "web", "fuzz", "directory"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "ffuf-extensions"
+    description: "Fuzz with common file extensions"
+    command: "ffuf -u http://{IP}/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -e .php,.html,.txt,.asp,.aspx,.jsp,.bak,.old,.config -ac"
+    tool: "ffuf"
+    tags: ["ffuf", "web", "fuzz", "extensions"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "ffuf-vhost"
+    description: "Virtual host discovery"
+    command: "ffuf -u http://{IP} -H 'Host: FUZZ.{DOMAIN}' -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -ac"
+    tool: "ffuf"
+    tags: ["ffuf", "web", "vhost", "subdomain"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Add domain to /etc/hosts first"
+
+  - name: "ffuf-post-fuzz"
+    description: "POST parameter fuzzing"
+    command: "ffuf -u http://{IP}/login -X POST -d 'username=FUZZ&password=test' -w /usr/share/seclists/Usernames/top-usernames-shortlist.txt -ac"
+    tool: "ffuf"
+    tags: ["ffuf", "web", "post", "fuzz"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "feroxbuster-recursive"
+    description: "Recursive directory brute with feroxbuster"
+    command: "feroxbuster -u http://{IP} -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -d 2 -t 50"
+    tool: "feroxbuster"
+    tags: ["feroxbuster", "web", "recursive", "fuzz"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "gobuster-dir"
+    description: "Directory enumeration with gobuster"
+    command: "gobuster dir -u http://{IP} -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -t 50 -o scans/gobuster.txt"
+    tool: "gobuster"
+    tags: ["gobuster", "web", "directory"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "whatweb-scan"
+    description: "Web technology fingerprinting"
+    command: "whatweb http://{IP} -a 3"
+    tool: "whatweb"
+    tags: ["whatweb", "web", "fingerprint"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "nikto-scan"
+    description: "Web vulnerability scanner"
+    command: "nikto -h http://{IP} -o scans/nikto.txt"
+    tool: "nikto"
+    tags: ["nikto", "web", "vuln"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "curl-robots"
+    description: "Check robots.txt"
+    command: "curl -s http://{IP}/robots.txt"
+    tool: "curl"
+    tags: ["curl", "web", "recon"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "wpscan-enum"
+    description: "WordPress enumeration (plugins, themes, users)"
+    command: "wpscan --url http://{IP} -e ap,at,u --no-banner"
+    tool: "wpscan"
+    tags: ["wpscan", "wordpress", "web", "enum"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "wpscan-brute"
+    description: "WordPress password brute force"
+    command: "wpscan --url http://{IP} -U {USER} -P /usr/share/wordlists/rockyou.txt --no-banner"
+    tool: "wpscan"
+    tags: ["wpscan", "wordpress", "brute"]
+    os: "any"
+    exam: ["oscp", "cpts"]

