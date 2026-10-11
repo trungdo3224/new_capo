@@ -44,11 +44,13 @@ from capo.cli.add import add_app
 from capo.cli.scan import scan_app
 from capo.cli.state_cmds import state_app
 from capo.cli.target import target_app
+from capo.cli.web import web_app
 
 app.add_typer(target_app, name="target")
 app.add_typer(scan_app, name="scan")
 app.add_typer(add_app, name="add")
 app.add_typer(state_app, name="state")
+app.add_typer(web_app, name="web")
 
 # Convenient alias for 'capo set target <IP>'
 set_app = typer.Typer(help="Set engagement properties", no_args_is_help=True)

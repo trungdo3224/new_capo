@@ -1,0 +1,64 @@
+{
+  "schema_version": 5,
+  "target": "10.10.10.99",
+  "ip": "10.10.10.99",
+  "hostname": "",
+  "os": "Windows Server 2022",
+  "os_build": "",
+  "arch": "",
+  "domains": [
+    "inlanefreight.local"
+  ],
+  "domain_info": {
+    "domain_name": "inlanefreight.local",
+    "dc_ip": "",
+    "dns_name": "",
+    "is_domain_joined": false,
+    "is_dc": false
+  },
+  "ports": [
+    {
+      "port": 445,
+      "protocol": "smb",
+      "service": "windows server 2022",
+      "version": "",
+      "state": "open"
+    }
+  ],
+  "services": {
+    "445/smb": {
+      "service": "windows server 2022",
+      "version": ""
+    }
+  },
+  "shares": [],
+  "directories": [],
+  "vhosts": [],
+  "users": [],
+  "hashes": [],
+  "credentials": [
+    {
+      "username": "Administrator",
+      "password": "Password123!",
+      "service": "",
+      "is_admin": true
+    }
+  ],
+  "notes": [
+    {
+      "note": "AS-REP roastable svc_backup",
+      "timestamp": "2026-09-14T23:12:04.274775+00:00"
+    }
+  ],
+  "flags": {
+    "user_txt": "",
+    "proof_txt": "",
+    "local_txt": ""
+  },
+  "nse_results": [],
+  "vulnerabilities": [],
+  "banners": {},
+  "scan_history": [],
+  "created_at": "2026-09-14T23:12:04.233545+00:00",
+  "updated_at": "2026-09-14T23:12:04.274784+00:00"
+}

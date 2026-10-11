@@ -11,6 +11,7 @@ license = {text = "MIT"}
 requires-python = ">=3.10"
 dependencies = [
     "typer[all]>=0.9.0",
+    "click>=8.1.0",
     "rich>=13.0.0",
     "prompt-toolkit>=3.0.0",
     "pyyaml>=6.0",
@@ -50,3 +51,9 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "S", "B"]
 ignore = ["S603", "S607", "S101"]
+
+[tool.ruff.lint.per-file-ignores]
+# Typer intentionally uses parameter declarations as default values.
+"capo/cli/web.py" = ["B008"]
+# Keep complete teaching sentences readable alongside their playbook fields.
+"capo/web/playbooks.py" = ["E501"]

@@ -44,9 +44,22 @@ pip install -e .
 
 ---
 
-## The 4 Core Verbs
+## Core commands and web workflow
 
-C.A.P.O is stripped down to **4 focused CLI commands**:
+### Web application testing
+
+`capo web` adds an independent, repeating web pentesting workflow: observe, choose a
+hypothesis, test, assess evidence, and revisit relevant tests. It includes 34 playbooks,
+five tool adapters, per-engagement notes/evidence, Markdown knowledge retrieval and optional
+local Gemma assistance. You choose each action; scanner output does not confirm findings.
+
+Use `capo web suggest` to inspect proposed tests and `capo web advanced` to browse the
+14 advanced techniques. The original `capo web next` remains a compatibility alias.
+
+Start with `capo web doctor` and follow the [web workflow guide](docs/WEB-WORKFLOW.md).
+Existing commands and target workspaces remain available.
+
+The original **4 core CLI commands** remain available:
 
 ```text
 capo target   ──> Set or inspect the active target workspace

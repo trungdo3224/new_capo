@@ -45,26 +45,6 @@ def _show_next_steps(wrapper: "BaseWrapper"):
         pass  # never fail on suggestion display
 
 
-def _auto_check_methodologies():
-    """Auto-complete methodology steps after a scan finishes."""
-    try:
-        from capo.modules.methodology import methodology_engine
-
-        methodology_engine.load_all()
-        results = methodology_engine.auto_check_all_active()
-        if results:
-            console.print()
-            for mname, sids in results.items():
-                meth = methodology_engine.get(mname)
-                step_map = {s.id: s for s in meth.steps} if meth else {}
-                for sid in sids:
-                    sn = step_map.get(sid)
-                    label = sn.name if sn else sid
-                    console.print(f"   [green]✓[/green] [bold]{mname}[/bold]: {label}")
-    except Exception:
-        pass  # never fail on methodology check
-
-
 class BaseWrapper(ABC):
     """Abstract base class for tool wrappers."""
 
@@ -179,16 +159,6 @@ class BaseWrapper(ABC):
                 duration=round(elapsed, 1),
             )
 
-            # Record in session database (no-op if no active session)
-            from capo.modules.session_db import session_db
-            session_db.record_command(
-                tool=self.tool_name,
-                command=cmd_str,
-                output_file=str(output_file) if output_file else "",
-                exit_code=result.returncode,
-                duration=round(elapsed, 1),
-            )
-
             if result.returncode == 0:
                 print_success(f"{self.tool_name} completed in {elapsed:.1f}s")
             else:
@@ -202,7 +172,6 @@ class BaseWrapper(ABC):
                 from capo.config import output_config
                 if not output_config.quiet:
                     _show_next_steps(self)
-                    _auto_check_methodologies()
 
             return result
 

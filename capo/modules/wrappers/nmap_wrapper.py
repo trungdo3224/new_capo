@@ -156,14 +156,14 @@ class NmapWrapper(BaseWrapper):
             if os_match is not None:
                 os_name = os_match.get("name", "")
                 if os_name:
-                    state_manager.set("os", os_name)
+                    state_manager.set_os(os_name)
 
             # Extract hostname
             hostname_el = host.find(".//hostname")
             if hostname_el is not None:
                 hostname = hostname_el.get("name", "")
                 if hostname:
-                    state_manager.set("hostname", hostname)
+                    state_manager.set_hostname(hostname)
 
             # Extract ports
             for port_el in host.findall(".//port"):
@@ -403,19 +403,22 @@ class NmapWrapper(BaseWrapper):
         if os_match:
             os_name = os_match.group(1).strip()
             if os_name:
-                state_manager.set("os", os_name)
+                state_manager.set_os(os_name)
+                build_match = re.search(r"\b(1\d{4}|2\d{4})\b", os_name)
+                if build_match:
+                    state_manager.set_os_build(build_match.group(1))
 
         # Computer name: FOREST
         comp_match = re.search(r"Computer name:\s*(\S+)", text)
         if comp_match:
-            state_manager.set("hostname", comp_match.group(1).strip())
+            state_manager.set_hostname(comp_match.group(1).strip())
 
         # Domain name: htb.local
         domain_match = re.search(r"Domain name:\s*(\S+)", text)
         if domain_match:
             domain = domain_match.group(1).strip()
             if domain and domain.lower() != "workgroup":
-                state_manager.add_domain(domain)
+                state_manager.set_domain(domain)
                 print_info(f"SMB discovery: auto-discovered domain '{domain}'")
 
         # FQDN: FOREST.htb.local
